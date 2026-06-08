@@ -530,6 +530,19 @@ func main() {
 		CallbackPort: oauthCallbackPort,
 	}
 
+	// Allow API keys to be set via environment variable, overriding config file values.
+	if apiKeysEnv, ok := lookupEnv("API_KEYS", "api_keys"); ok {
+		var keys []string
+		for _, k := range strings.Split(apiKeysEnv, ",") {
+			if trimmed := strings.TrimSpace(k); trimmed != "" {
+				keys = append(keys, trimmed)
+			}
+		}
+		if len(keys) > 0 {
+			cfg.APIKeys = keys
+		}
+	}
+
 	commandMode := vertexImport != "" || login || antigravityLogin || codexLogin || codexDeviceLogin || claudeLogin || kimiLogin || xaiLogin
 	cloudConfigMissing := isCloudDeploy && !configFileExists
 	homeMode := configLoadedFromHome || (cfg != nil && cfg.Home.Enabled)
