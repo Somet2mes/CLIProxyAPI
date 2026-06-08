@@ -741,6 +741,7 @@ func LoadConfigOptional(configFile string, optional bool) (*Config, error) {
 	cfg.Pprof.Enable = false
 	cfg.Pprof.Addr = DefaultPprofAddr
 	cfg.AmpCode.RestrictManagementToLocalhost = false // Default to false: API key auth is sufficient
+	cfg.RemoteManagement.AllowRemote = true
 	cfg.RemoteManagement.PanelGitHubRepository = DefaultPanelGitHubRepository
 	if err = yaml.Unmarshal(data, &cfg); err != nil {
 		if optional {
@@ -770,8 +771,8 @@ func LoadConfigOptional(configFile string, optional bool) (*Config, error) {
 
 	// Hash remote management key if plaintext is detected (nested)
 	// We consider a value to be already hashed if it looks like a bcrypt hash ($2a$, $2b$, or $2y$ prefix).
-	if cfg.RemoteManagement.SecretKey != "" && !looksLikeBcrypt(cfg.RemoteManagement.SecretKey) {
-		hashed, errHash := hashSecret(cfg.RemoteManagement.SecretKey)
+	if cfg.RemoteManagement.SecretKey != "" && !LooksLikeBcrypt(cfg.RemoteManagement.SecretKey) {
+		hashed, errHash := HashSecret(cfg.RemoteManagement.SecretKey)
 		if errHash != nil {
 			return nil, fmt.Errorf("failed to hash remote management key: %w", errHash)
 		}
@@ -1093,7 +1094,8 @@ func normalizeModelPrefix(prefix string) string {
 }
 
 // looksLikeBcrypt returns true if the provided string appears to be a bcrypt hash.
-func looksLikeBcrypt(s string) bool {
+// LooksLikeBcrypt reports whether s appears to be a bcrypt hash.
+func LooksLikeBcrypt(s string) bool {
 	return len(s) > 4 && (s[:4] == "$2a$" || s[:4] == "$2b$" || s[:4] == "$2y$")
 }
 
@@ -1167,7 +1169,8 @@ func NormalizeOAuthExcludedModels(entries map[string][]string) map[string][]stri
 }
 
 // hashSecret hashes the given secret using bcrypt.
-func hashSecret(secret string) (string, error) {
+// HashSecret hashes a plaintext secret using bcrypt with the default cost.
+func HashSecret(secret string) (string, error) {
 	// Use default cost for simplicity.
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(secret), bcrypt.DefaultCost)
 	if err != nil {

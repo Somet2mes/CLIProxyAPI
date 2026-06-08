@@ -543,6 +543,20 @@ func main() {
 		}
 	}
 
+	// Allow management secret key to be set via environment variable.
+	if secretKeyEnv, ok := lookupEnv("MANAGEMENT_KEY", "management_key"); ok {
+		if !config.LooksLikeBcrypt(secretKeyEnv) {
+			hashed, errHash := config.HashSecret(secretKeyEnv)
+			if errHash != nil {
+				log.Errorf("failed to hash management key from environment: %v", errHash)
+				return
+			}
+			cfg.RemoteManagement.SecretKey = hashed
+		} else {
+			cfg.RemoteManagement.SecretKey = secretKeyEnv
+		}
+	}
+
 	commandMode := vertexImport != "" || login || antigravityLogin || codexLogin || codexDeviceLogin || claudeLogin || kimiLogin || xaiLogin
 	cloudConfigMissing := isCloudDeploy && !configFileExists
 	homeMode := configLoadedFromHome || (cfg != nil && cfg.Home.Enabled)

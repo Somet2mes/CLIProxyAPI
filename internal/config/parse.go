@@ -36,7 +36,7 @@ func ParseConfigBytes(data []byte) (*Config, error) {
 	}
 
 	// Hash remote management key if plaintext is detected (nested), but do NOT persist.
-	if cfg.RemoteManagement.SecretKey != "" && !looksLikeBcrypt(cfg.RemoteManagement.SecretKey) {
+	if cfg.RemoteManagement.SecretKey != "" && !LooksLikeBcrypt(cfg.RemoteManagement.SecretKey) {
 		hashed, errHash := bcrypt.GenerateFromPassword([]byte(cfg.RemoteManagement.SecretKey), bcrypt.DefaultCost)
 		if errHash != nil {
 			return nil, fmt.Errorf("hash remote management key: %w", errHash)
